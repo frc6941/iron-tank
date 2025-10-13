@@ -1,10 +1,11 @@
 package frc.robot.command;
 
-
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConstants;
 import frc.robot.subsystems.tank.TankSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -13,77 +14,97 @@ import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static frc.robot.RobotConstants.PoseConstants.RotationPID.*;
 import static frc.robot.RobotConstants.PoseConstants.TranslationPID.*;
+import static frc.robot.RobotConstants.TankConstants.MAX_ANGULAR;
+import static frc.robot.RobotConstants.TankConstants.MAX_SPEED;
 
 public class PoseCommand extends Command {
-    /**
-     * Creates a new ForwardCommand.
-     */
 
-    PIDController translationPIDCtrl = new PIDController(TranKP.get(), TranKI.get(), TranKD.get());
-    PIDController rotationPIDCtrl = new PIDController(RotKP.get(), RotKI.get(), RotKD.get());
-    TankSubsystem mTankSubsystem;
-    CommandXboxController Controller;
-    Pose2d targetLocation;
-    boolean TranslationAtGoal = false;
+    private final TankSubsystem mTankSubsystem;
+    private final Pose2d targetLocation;
+    
+    private final PIDController translationPIDCtrl;
+    private final PIDController rotationPIDCtrl;
 
-    public PoseCommand(Pose2d targetLocation, TankSubsystem mTankSubsystem, CommandXboxController Controller) {
+    private static final double TRANSLATION_TOLERANCE_METERS = 0.05; // 5厘米
+    private static final double ROTATION_TOLERANCE_DEGREES = 3.0;   // 3度
+
+    public PoseCommand(Pose2d targetLocation, TankSubsystem mTankSubsystem) {
         this.targetLocation = targetLocation;
         this.mTankSubsystem = mTankSubsystem;
-        this.Controller = Controller;
-        // Use addRequirements() here to declare subsystem dependencies.
+
+        translationPIDCtrl = new PIDController(TranKP.get(), TranKI.get(), TranKD.get());
+        rotationPIDCtrl = new PIDController(RotKP.get(), RotKI.get(), RotKD.get());
+        
+        rotationPIDCtrl.enableContinuousInput(-180, 180);
+
+        translationPIDCtrl.setTolerance(TRANSLATION_TOLERANCE_METERS);
+        rotationPIDCtrl.setTolerance(ROTATION_TOLERANCE_DEGREES);
+
+        addRequirements(mTankSubsystem);
     }
 
-
-    // Called when the command is initially scheduled.
     @Override
     public void initialize() {
         if (RobotConstants.TUNING) {
             translationPIDCtrl.setPID(TranKP.get(), TranKI.get(), TranKD.get());
             rotationPIDCtrl.setPID(RotKP.get(), RotKI.get(), RotKD.get());
         }
+        
         translationPIDCtrl.reset();
         rotationPIDCtrl.reset();
-
-        translationPIDCtrl.setSetpoint(0);
-        rotationPIDCtrl.setSetpoint(0);
     }
 
-    // Called every time the scheduler runs while the command is scheduled.
     @Override
     public void execute() {
-        if (targetLocation.getTranslation().minus(mTankSubsystem.getRobotPose().getTranslation()).getNorm() <= 0.02) {
-            TranslationAtGoal = true;
-        }
+        Pose2d currentPose = mTankSubsystem.getRobotPose();
+        
+        Translation2d translationError = targetLocation.getTranslation().minus(currentPose.getTranslation());
+        
+        double distanceToTarget = translationError.getNorm();
 
-        if (!TranslationAtGoal) {
-            mTankSubsystem.setArcadeSpeed(
-                    MetersPerSecond.of(-translationPIDCtrl.calculate(
-                            targetLocation.getTranslation().minus(mTankSubsystem.getRobotPose().getTranslation()).getNorm())),
-                    DegreesPerSecond.of(-rotationPIDCtrl.calculate(
-                            (mTankSubsystem.getRobotPose().getRotation().minus(targetLocation.getTranslation().minus(
-                                    mTankSubsystem.getRobotPose().getTranslation()).getAngle())).getDegrees()))
-            );
+        double forwardSpeed;
+        Rotation2d targetRotation;
+
+        if (distanceToTarget > TRANSLATION_TOLERANCE_METERS) {
+            forwardSpeed = -translationPIDCtrl.calculate(distanceToTarget, 0);
+            targetRotation = translationError.getAngle();
         } else {
-            mTankSubsystem.setArcadeSpeed(
-                    MetersPerSecond.of(0),
-                    DegreesPerSecond.of(rotationPIDCtrl.calculate(
-                            (targetLocation.getRotation().minus(mTankSubsystem.getRobotPose().getRotation()).getDegrees())))
-            );
+            forwardSpeed = 0;
+            targetRotation = targetLocation.getRotation();
         }
 
-        Logger.recordOutput("Tank/targetLocation", targetLocation);
+        double rotationSpeed = rotationPIDCtrl.calculate(
+                currentPose.getRotation().getDegrees(),
+                targetRotation.getDegrees()
+        );
+
+        forwardSpeed = MathUtil.clamp(forwardSpeed, -MAX_SPEED.in(MetersPerSecond), MAX_SPEED.in(MetersPerSecond));
+        rotationSpeed = MathUtil.clamp(rotationSpeed, -MAX_ANGULAR.in(DegreesPerSecond), MAX_ANGULAR.in(DegreesPerSecond));
+        mTankSubsystem.setArcadeSpeed(
+                MetersPerSecond.of(forwardSpeed),
+                DegreesPerSecond.of(rotationSpeed)
+        );
+
+        // log
+        Logger.recordOutput("PoseCommand/TargetPose", targetLocation);
+        Logger.recordOutput("PoseCommand/DistanceToTarget", distanceToTarget);
+        Logger.recordOutput("PoseCommand/ForwardSpeed", forwardSpeed);
+        Logger.recordOutput("PoseCommand/RotationSpeed", rotationSpeed);
     }
 
-
-    // Called once the command ends or is interrupted.
     @Override
     public void end(boolean interrupted) {
-        TranslationAtGoal = false;
+        mTankSubsystem.setArcadeSpeed(MetersPerSecond.of(0), DegreesPerSecond.of(0));
     }
 
-    // Returns true when the command should en// d.
     @Override
     public boolean isFinished() {
-        return false;
+        boolean translationFinished = Math.abs(targetLocation.getTranslation().minus(mTankSubsystem.getRobotPose().getTranslation()).getNorm())
+                < TRANSLATION_TOLERANCE_METERS;
+        
+        boolean rotationFinished = Math.abs(targetLocation.getRotation().minus(mTankSubsystem.getRobotPose().getRotation()).getDegrees())
+                < ROTATION_TOLERANCE_DEGREES;
+
+        return translationFinished && rotationFinished;
     }
 }
