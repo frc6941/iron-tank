@@ -14,15 +14,15 @@ public class RobotConstants {
     public static class TankConstants {
         public static LinearVelocity MAX_SPEED = MetersPerSecond.of(2);
         public static AngularVelocity MAX_ANGULAR = RadiansPerSecond.of(0.5 * Math.PI);
-        public static double GEAR_RATIO = 12.0;
+        public static double GEAR_RATIO = 12.76;
         public static Distance WHEEL_TRACK = Meters.of(0.548005);
         public static Distance WHEEL_RADIUS = Inches.of(3);
 
 
         public static class TankPID {
-            public static final TunableNumber kP = new TunableNumber("Tank_PID/KP", 0.3);
+            public static final TunableNumber kP = new TunableNumber("Tank_PID/KP", 0.14);
             public static final TunableNumber kI = new TunableNumber("Tank_PID/KI", 0);
-            public static final TunableNumber kD = new TunableNumber("Tank_PID/KD", 0);
+            public static final TunableNumber kD = new TunableNumber("Tank_PID/KD", 0.002);
         }
     }
 
@@ -49,23 +49,23 @@ public class RobotConstants {
 
     public static class ForwardConstants {
         public static class ForwardPID {
-            public static final TunableNumber kP = new TunableNumber("Forward_PID/KP", 0.3);
+            public static final TunableNumber kP = new TunableNumber("Forward_PID/KP", 0.14);
             public static final TunableNumber kI = new TunableNumber("Forward_PID/KI", 0);
-            public static final TunableNumber kD = new TunableNumber("Forward_PID/KD", 0);
+            public static final TunableNumber kD = new TunableNumber("Forward_PID/KD", 0.002);
         }
     }
 
     public static class PoseConstants {
         public static class TranslationPID {
-            public static final TunableNumber TranKP = new TunableNumber("Pose_PID/TranslationPID/KP", 1.5);
+            public static final TunableNumber TranKP = new TunableNumber("Pose_PID/TranslationPID/KP", 0.14);
             public static final TunableNumber TranKI = new TunableNumber("Pose_PID/TranslationPID/KI", 0);
-            public static final TunableNumber TranKD = new TunableNumber("Pose_PID/TranslationPID/KD", 0);
+            public static final TunableNumber TranKD = new TunableNumber("Pose_PID/TranslationPID/KD", 0.002);
         }
 
         public static class RotationPID {
-            public static final TunableNumber RotKP = new TunableNumber("Pose_PID/RotationPID/KP", 10);
+            public static final TunableNumber RotKP = new TunableNumber("Pose_PID/RotationPID/KP", 0.14);
             public static final TunableNumber RotKI = new TunableNumber("Pose_PID/RotationPID/KI", 0);
-            public static final TunableNumber RotKD = new TunableNumber("Pose_PID/RotationPID/KD", 0);
+            public static final TunableNumber RotKD = new TunableNumber("Pose_PID/RotationPID/KD", 0.002);
         }
     }
    

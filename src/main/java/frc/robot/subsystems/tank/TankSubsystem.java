@@ -109,6 +109,7 @@ public class TankSubsystem extends SubsystemBase {
         currentAngle = Degrees.of(pigeonIMU.getYaw());
 
         robotPose = tankOdometry.update(new Rotation2d(currentAngle), leftDistance, rightDistance);
+        Pose2d pose = new Pose2d();
 
         SmartDashboard.putNumber("TankSubsystem/leftDistance", leftDistance);
         SmartDashboard.putNumber("TankSubsystem/rightDistance", rightDistance);

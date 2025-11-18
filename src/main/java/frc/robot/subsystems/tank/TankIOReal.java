@@ -16,6 +16,7 @@ import org.littletonrobotics.junction.Logger;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 public class TankIOReal implements TankIO {
+    //CanID need to be changed on 9994
     TalonFX motorRight = new TalonFX(1, "rio");
     private final StatusSignal<AngularVelocity> rightMotorVelocityRotPerSec = motorRight.getVelocity();
     private final StatusSignal<Voltage> rightMotorAppliedVolts = motorRight.getSupplyVoltage();
