@@ -4,7 +4,7 @@
 
 package frc.robot.subsystems.tank;
 
-import com.ctre.phoenix.sensors.PigeonIMU;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -15,6 +15,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -27,7 +28,7 @@ public class TankSubsystem extends SubsystemBase {
 
     private final TankIO io;
     private final TankIOInputsAutoLogged inputs = new TankIOInputsAutoLogged();
-    public PigeonIMU pigeonIMU = new PigeonIMU(3);
+    private final ADXRS450_Gyro gyro = new ADXRS450_Gyro();
     public DifferentialDriveOdometry tankOdometry =
             new DifferentialDriveOdometry(new Rotation2d(), 0, 0, new Pose2d());
     Pose2d robotPose = new Pose2d();
@@ -43,6 +44,8 @@ public class TankSubsystem extends SubsystemBase {
 
     public TankSubsystem(TankIO io) {
         this.io = io;
+        gyro.calibrate(); // Calibrate the gyro during initialization
+        gyro.reset();     // Reset the gyro angle
     }
 
     /**
@@ -59,15 +62,19 @@ public class TankSubsystem extends SubsystemBase {
 
         io.setRPS(chassisSpeedToMotorRPS(wheelSpeeds.leftMetersPerSecond), chassisSpeedToMotorRPS(wheelSpeeds.rightMetersPerSecond));
     }
+    public double getGyroAngle() {
+        return gyro.getAngle();
+    }
 
+    // Reset gyro to 0
+    public void resetGyro() {
+        gyro.reset();
+    }
 
     public void resetOdometry() {
         tankOdometry.resetPose(new Pose2d());
-    }
-
-    public void resetGyro() {
-        pigeonIMU.setYaw(0);
-    }
+        
+    }   
 
     @Override
     public void periodic() {
@@ -79,9 +86,8 @@ public class TankSubsystem extends SubsystemBase {
         } else {
 
         }
-
         Logger.recordOutput("Tank/RobotPose", robotPose);
-        Logger.recordOutput("Tank/Yaw", pigeonIMU.getYaw());
+        Logger.recordOutput("Tank/gyroAngle",gyro.getAngle() );
         Logger.recordOutput("Tank/measuredDistance", getRobotPose().getY());
     }
 
@@ -106,7 +112,7 @@ public class TankSubsystem extends SubsystemBase {
         double leftDistance = -inputs.leftPosition / GEAR_RATIO * (WHEEL_RADIUS.in(Meters) * 2 * Math.PI);
         double rightDistance = inputs.rightPosition / GEAR_RATIO * (WHEEL_RADIUS.in(Meters) * 2 * Math.PI);
 
-        currentAngle = Degrees.of(pigeonIMU.getYaw());
+        currentAngle = Degrees.of(gyro.getAngle());
 
         robotPose = tankOdometry.update(new Rotation2d(currentAngle), leftDistance, rightDistance);
         Pose2d pose = new Pose2d();

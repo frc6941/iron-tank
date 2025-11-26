@@ -12,11 +12,11 @@ public class RobotConstants {
     public static final boolean FORWARD = true;
 
     public static class TankConstants {
-        public static LinearVelocity MAX_SPEED = MetersPerSecond.of(2);
+        public static LinearVelocity MAX_SPEED = MetersPerSecond.of(3);
         public static AngularVelocity MAX_ANGULAR = RadiansPerSecond.of(0.5 * Math.PI);
         public static double GEAR_RATIO = 12.76;
         public static Distance WHEEL_TRACK = Meters.of(0.548005);
-        public static Distance WHEEL_RADIUS = Inches.of(3);
+        public static Distance WHEEL_RADIUS = Inches.of(5);
 
 
         public static class TankPID {

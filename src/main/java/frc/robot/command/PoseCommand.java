@@ -25,8 +25,8 @@ public class PoseCommand extends Command {
     private final PIDController translationPIDCtrl;
     private final PIDController rotationPIDCtrl;
   
-    private static final double TRANSLATION_TOLERANCE_METERS = 0.05; // 5厘米
-    private static final double ROTATION_TOLERANCE_DEGREES = 3.0;   // 3度
+    private static final double TRANSLATION_TOLERANCE_METERS = 0.08; // 5厘米
+    private static final double ROTATION_TOLERANCE_DEGREES = 10.0;   // 3度
 
     public PoseCommand(Pose2d targetLocation, TankSubsystem mTankSubsystem) {
         this.targetLocation = targetLocation;

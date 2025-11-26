@@ -119,7 +119,7 @@ public class RobotContainer {
         mainController.rightBumper().whileTrue(new TurnCommand(Degrees.of(-145), m_tankSubsystem, mainController));
         mainController.a().whileTrue(new ForwardCommand(Meters.of(2), m_tankSubsystem, mainController));
         mainController.b().whileTrue(new PoseCommand(
-                new Pose2d(3, 4, new Rotation2d(Degrees.of(90))),
+                new Pose2d(1, 0, new Rotation2d(Degrees.of(90))),
                 m_tankSubsystem));
 
         m_tankSubsystem.setDefaultCommand(arcadeDrive);
